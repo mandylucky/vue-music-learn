@@ -1,18 +1,18 @@
 <script setup>
 import { ref } from 'vue'
 import Slider from '@/components/base/slider/slider.vue'
-import scroll from '@/components/base/scroll/scroll.vue';
+import scroll from '@/components/base/scroll/scroll.vue'
 import { getRecommend } from '@/service/recommend'
-const sliders=ref([]);
-const albums=ref([]);
-const loading=ref(true);
-const loadingText=ref("加载开始啦...")
-getRecommend().then(result=>{
-  sliders.value=result.sliders;
-  albums.value=result.albums;
-}).finally(()=>{
-  loading.value=false;
-});
+const sliders = ref([])
+const albums = ref([])
+const loading = ref(true)
+const loadingText = ref('加载开始啦...')
+getRecommend().then(result => {
+  sliders.value = result.sliders
+  albums.value = result.albums
+}).finally(() => {
+  loading.value = false
+})
 
 </script>
 <template>
@@ -27,8 +27,8 @@ getRecommend().then(result=>{
           <div class="recommend-list">
             <h1 class="list-title" v-show="!loading">热门歌单推荐</h1>
             <ul>
-              <li 
-              v-for="item in albums" 
+              <li
+              v-for="item in albums"
               :key="item.id"
               class="item"
               @click="selectItem(item)"

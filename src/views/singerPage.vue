@@ -1,10 +1,10 @@
 <script setup>
-import indexList from '@/components/base/index-list/index-list.vue';
-import { getSingerList } from '@/service/singer';
-import {ref} from 'vue';
-const singers=ref([])
-getSingerList().then(res=>{
-    singers.value=res.singers;
+import indexList from '@/components/base/index-list/index-list.vue'
+import { getSingerList } from '@/service/singer'
+import { ref } from 'vue'
+const singers = ref([])
+getSingerList().then(res => {
+  singers.value = res.singers
 })
 </script>
 <template>

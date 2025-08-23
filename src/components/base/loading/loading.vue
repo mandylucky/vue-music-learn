@@ -1,12 +1,12 @@
 <script setup>
-    import {ref,defineExpose} from "vue";
-    let title=ref("正在加载...");
-    function setTitle(titleText){
-      title.value=titleText
-    }
-    defineExpose({
-      setTitle
-    })
+import { ref, defineExpose } from 'vue'
+const title = ref('正在加载...')
+function setTitle (titleText) {
+  title.value = titleText
+}
+defineExpose({
+  setTitle
+})
 </script>
 
 <template>

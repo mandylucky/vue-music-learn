@@ -1,23 +1,28 @@
 <script setup>
-    import { defineProps,useTemplateRef } from 'vue';
-    import useFixed from './useFixed';
-    import scroll from '@/components/base/scroll/scroll.vue';
-    const props=defineProps({
-        data:{
-            type: Array,
-            default(){
-                return []
-            }
-        },
-    })
-    const groupRef = useTemplateRef("groupRef");
-    const { fixedStyle,onScroll,fixedTitle } = useFixed(groupRef,props);
+import { defineProps, useTemplateRef } from 'vue'
+import useFixed from './useFixed'
+import useShortcut from './useShortcut.js'
+import scroll from '@/components/base/scroll/scroll.vue'
+const props = defineProps({
+  data: {
+    type: Array,
+    default () {
+      return []
+    }
+  }
+})
+const groupRef=useTemplateRef('groupRef')
+const scrollRef=useTemplateRef("scrollRef")
+
+const { shortcutList, onShortcutTouchStart,onShortcutTouchMove } = useShortcut(props,groupRef,scrollRef)
+const { currentIndex, fixedStyle, onScroll, fixedTitle } = useFixed(groupRef, props)
 </script>
 <template>
-    <scroll 
-    class="index-list" 
+    <scroll
+    class="index-list"
     :probe-type="3"
-    @scroll="onScroll">
+    @scroll="onScroll"
+    ref="scrollRef">
         <ul ref="groupRef">
             <li v-for="group in data"
                 :key="group.title"
@@ -25,7 +30,7 @@
             >
                 <h2 class="title">{{ group.title }}</h2>
                 <ul>
-                    <li 
+                    <li
                         v-for="item in group.list"
                         :key="item.id"
                         class="item"
@@ -36,12 +41,28 @@
                 </ul>
             </li>
         </ul>
-        <div 
-        class="fixed" 
+        <div
+        class="fixed"
         v-show="fixedTitle"
         :style="fixedStyle"
         >
           <div class="fixed-title">{{ fixedTitle }}</div>
+        </div>
+        <div class="shortcut"
+        @touchstart.stop.prevent="onShortcutTouchStart"
+        @touchmove.stop.prevent="onShortcutTouchMove"
+        >
+          <ul>
+            <li
+            v-for="(item,index) in shortcutList"
+            :key="item"
+            class="item"
+            :class="{'current':currentIndex ===index }"
+            :data-index="index"
+            >
+            {{ item }}
+            </li>
+          </ul>
         </div>
     </scroll>
 </template>
