@@ -31,7 +31,6 @@ getRecommend().then(result => {
               v-for="item in albums"
               :key="item.id"
               class="item"
-              @click="selectItem(item)"
               >
               <div class="icon">
                 <img width="60" height="60" v-lazy="item.pic"/>

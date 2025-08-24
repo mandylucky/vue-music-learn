@@ -1,8 +1,9 @@
 <script setup>
-import { defineProps, useTemplateRef } from 'vue'
+import { defineProps,defineEmits, useTemplateRef } from 'vue'
 import useFixed from './useFixed'
 import useShortcut from './useShortcut.js'
 import scroll from '@/components/base/scroll/scroll.vue'
+const emit=defineEmits(['select'])
 const props = defineProps({
   data: {
     type: Array,
@@ -16,6 +17,10 @@ const scrollRef=useTemplateRef("scrollRef")
 
 const { shortcutList, onShortcutTouchStart,onShortcutTouchMove } = useShortcut(props,groupRef,scrollRef)
 const { currentIndex, fixedStyle, onScroll, fixedTitle } = useFixed(groupRef, props)
+
+function onItemClick(item){
+  emit('select',item)
+}
 </script>
 <template>
     <scroll
@@ -34,6 +39,7 @@ const { currentIndex, fixedStyle, onScroll, fixedTitle } = useFixed(groupRef, pr
                         v-for="item in group.list"
                         :key="item.id"
                         class="item"
+                        @click="onItemClick(item)"
                     >
                         <img class="avatar" v-lazy="item.pic"/>
                         <span class="name">{{ item.name }}</span>

@@ -10,7 +10,11 @@ const routes = [
   },
   {
     path: '/singer',
-    component: () => import('@/views/singerPage.vue')
+    component: () => import('@/views/singerPage.vue'),
+    children:[{
+      path:':id',
+      component:()=>import("@/views/singer-detail.vue")
+    }]
   },
   {
     path: '/top-list',
