@@ -9,7 +9,7 @@ const mutations={
         state.playlist=list
     },
     setPlayMode(state,mode){
-        state.setPlayMode=mode
+        state.playMode=mode
     },
     setCurrentIndex(state,index){
         state.currentIndex=index
