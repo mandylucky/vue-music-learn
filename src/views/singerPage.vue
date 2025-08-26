@@ -1,5 +1,5 @@
 <script setup>
-import indexList from '@/components/base/index-list/index-list.vue'
+import indexList from '@/components/index-list/index-list.vue'
 import { getSingerList } from '@/service/singer'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import Slider from '@/components/base/slider/slider.vue'
-import scroll from '@/components/base/scroll/scroll.vue'
+import scroll from '@/components/wrap-scroll'
 import { getRecommend } from '@/service/recommend'
 const sliders = ref([])
 const albums = ref([])

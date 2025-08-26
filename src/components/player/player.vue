@@ -1,5 +1,12 @@
 <template>
-    <div class="player">
+    <div class="player" v-show="playlist.length">
+      <transition 
+        name="normal"
+        @enter="enter"
+        @after-enter="afterEnter"
+        @leave="leave"
+        @after-leave="afterLeave"
+        >
         <div class="normal-player" v-show="fullScreen">
             <div class="background">
                 <img :src="currentSong.pic"/>
@@ -11,7 +18,61 @@
                 <h1 class="title">{{ currentSong.name }}</h1>
                 <h2 class="subtitle">{{ currentSong.singer }}</h2>
             </div>
+            <div class="middle"
+              @touchstart.prevent="onMiddleTouchStart"
+              @touchmove.prevent="onMiddleTouchMove"
+              @touchend.prevent="onMiddleTouchEnd"
+            >
+              <div class="middle-l"  :style="middleLStyle">
+                <div class="cd-wrapper" ref="cdWrapperRef">
+                  <div class="cd" ref="cdRef">
+                    <img ref="cdImageRef" class="image" :class="cdCls"  :src="currentSong.pic"/>
+                  </div>
+                </div>
+              <div class="playing-lyric-wrapper">
+                <div class="playing-lyric">{{playingLyric}}</div>
+              </div>
+              </div>
+              <scroll
+                class="middle-r"
+                ref="lyricScrollRef"
+                :style="middleRStyle"
+              >
+                <div class="lyric-wrapper">
+                  <div v-if="currentLyric" ref="lyricListRef">
+                    <p
+                      class="text"
+                      :class="{'current': currentLineNum ===index}"
+                      v-for="(line,index) in currentLyric.lines"
+                      :key="line.num"
+                    >
+                      {{line.txt}}
+                    </p>
+                  </div>
+                  <div class="pure-music" v-show="pureMusicLyric">
+                    <p>{{pureMusicLyric}}</p>
+                  </div>
+                </div>
+              </scroll>
+            </div>
             <div class="bottom">
+              <div class="dot-wrapper">
+                <span class="dot" :class="{'active':currentShow==='cd'}"></span>
+                <span class="dot" :class="{'active':currentShow==='lyric'}"></span>
+              </div>
+              <div class="progress-wrapper">
+                <span class="time time-l">{{ formateTime(currentTime) }}</span>
+                <div class="progress-bar-wrapper">
+                  <progress-bar 
+                  ref="barRef"
+                  :progress="progress"
+                  @progress-changing="onProgressChanging"
+                  @progress-changed="onProgressChanged"
+                  >
+                  </progress-bar>
+                </div>
+                <span class="time time-r">{{ formateTime(currentSong.duration) }}</span>
+              </div>
               <div class="operators">
                 <div class="icon i-left">
                   <i :class="modeIcon" @click="changeMode"></i>
@@ -26,48 +87,86 @@
                   <div @click="next" class="icon-next"></div>
                 </div>
                 <div class="icon i-right">
-                  <i class="icon-not-favorite"></i>
+                  <i @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
                 </div>
               </div>
             </div>
         </div>
+      </transition>
+        
+      <mini-player
+        :progress="progress"
+        :toggle-play="togglePlay"
+      ></mini-player>
         <audio 
         ref="audioRef"
         @pause="onPause"
         @canplay="ready"
         @error="error"
+        @timeupdate="updateTime"
+        @ended="end"
         >
         </audio>
     </div>
 </template>
 <script>
-import { computed,watch,ref } from 'vue';
+import { computed,watch,ref, nextTick } from 'vue';
 import { useStore } from  'vuex';
+
 import useMode from './use-mode';
+import useFavorite from './use-favorite';
+import useCD from './use-cd';
+import useLyric from './use-lyric';
+import useMiddleInteractive from './use-middle-interactive'
+import useAnimation from './use-animation';
+
+import progressBar from './progress-bar.vue';
+import Scroll from "@/components/base/scroll/scroll.vue";
+import MiniPlayer from './mini-player'
+
+import { formateTime } from '@/assets/js/utils';
+import { PLAY_MODE } from '@/assets/js/constant';
+
 export default {
     name:"player",
+    components:{
+      progressBar,
+      Scroll,
+      MiniPlayer
+    },
     setup(){
         // data
         const audioRef=ref(null);
         const songReady=ref(false);
+        const currentTime=ref(0);
+        const barRef=ref(null);
+        let progressChanging=false;
 
         // vuex
         const store=useStore();
         const fullScreen=computed(()=>store.state.fullScreen)
         const currentSong=computed(()=>store.getters.currentSong)
         const playing=computed(()=>store.state.playing);
-
         const playIcon=computed(()=>{
           return playing.value?'icon-pause':'icon-play' 
+        })
+        const progress=computed(()=>{
+          return currentTime.value/currentSong.value.duration
         })
         const currentIndex=computed(()=>store.state.currentIndex);
         const playlist=computed(()=>store.state.playlist)
         const disableClass=computed(()=>{
           return songReady.value?'':'disable'
         })
-        
-        const {modeIcon,changeMode}=useMode()
+        const playMode=computed(()=>store.state.playMode);
 
+
+        const {modeIcon,changeMode}=useMode()
+        const {getFavoriteIcon,toggleFavorite}=useFavorite()
+        const { cdCls,cdRef,cdImageRef }=useCD()
+        const {lyricScrollRef,lyricListRef,currentLyric,currentLineNum,playLyric,stopLyric,pureMusicLyric,playingLyric}=useLyric({songReady,currentTime});
+        const { currentShow, middleLStyle, middleRStyle, onMiddleTouchStart, onMiddleTouchMove, onMiddleTouchEnd } = useMiddleInteractive()
+        const { cdWrapperRef,enter,afterEnter,leave,afterLeave }=useAnimation(); 
 
         // watch
         watch(currentSong,(newSong)=>{
@@ -77,20 +176,36 @@ export default {
           if(!newSong.id){
             return 
           }
+          currentTime.value=0;
           songReady.value=false;
           const audioEl=audioRef.value;
-          audioEl.src="https://webfs.kugou.com/202508241733/ab7207a076320b77a97be0c1758c3e60/v3/2ead3c69b4c7fa857a540807ccefdf4d/yp/full/ap1014_us0_mii0w1iw8z2ai2iphcu80ooo2ki81120_pi406_mx63818370_s922982164.mp3";
+          audioEl.src="https://lw-sycdn.kuwo.cn/bd07c497d2bd9e3f58ce6856f61928fa/68adaf69/resource/30106/trackmedia/M500004eqAmX3CBgwq.mp3";
           audioEl.play();
+          store.commit('setPlayingState',true)
         })
         watch(playing,(newPlaying)=>{
           if(!songReady.value) return
           const audioEl=audioRef.value;
-          newPlaying?audioEl.play():audioEl.pause()
+          if(newPlaying){
+            audioEl.play()
+            playLyric()
+          }else{
+            audioEl.pause()
+            stopLyric();
+          }
         })
+        watch(fullScreen,async (newFullScreen)=>{
+          if(newFullScreen){
+            await nextTick()
+            barRef.value.setOffset(progress.value)
+          }
+        })
+
 
         function ready(){
           if(songReady.value) return 
           songReady.value=true;
+          playLyric()
         }
         function goBack(){
           store.commit("setFullScreen",false)
@@ -109,6 +224,7 @@ export default {
           const audioEl=audioRef.value;
           audioEl.currentTime=0;
           audioEl.play()
+          store.commit('setPlayingState',true)
         }
         // error 设置为true 允许前进后退
         function error(){
@@ -126,9 +242,6 @@ export default {
               index=list.length-1;
             }
             store.commit('setCurrentIndex',index);
-            if(!playing.value){
-              store.commit('setPlayingState',true)
-            }
           }
         }
 
@@ -143,20 +256,63 @@ export default {
               index=0;
             }
             store.commit('setCurrentIndex',index);
-            if(!playing.value){
-              store.commit('setPlayingState',true)
-            }
            }
           
         }
+
+        function updateTime(e){
+          if(!progressChanging){
+            currentTime.value=e.target.currentTime;
+          }
+        }
+        function onProgressChanging(progress){
+          progressChanging=true;
+          currentTime.value=currentSong.value.duration*progress
+          playLyric();
+          stopLyric();
+        }
+        function onProgressChanged(progress){
+          progressChanging=false;
+          audioRef.value.currentTime=currentTime.value=
+          currentSong.value.duration*progress;
+          if(!playing.value){
+            store.commit('setPlayingState',true)
+          }
+          playLyric();
+        }
+
+        function end(){
+          currentTime.value=0;
+          if(playMode.value===PLAY_MODE.loop){
+            loop()
+          }else{
+            next()
+          }
+        }
+
         return {
+            cdWrapperRef,
+            enter,
+            afterEnter,
+            leave,
+            afterLeave, 
+            barRef,
+            playlist,
             audioRef,
             fullScreen,
             currentSong,
             disableClass,
             playIcon,
             modeIcon,
-
+            progress,
+            currentTime,
+            cdCls,
+            cdRef,
+            cdImageRef,
+            currentLyric,
+            currentLineNum,
+            lyricScrollRef,
+            lyricListRef,
             goBack,
             togglePlay,
             onPause,
@@ -165,6 +321,21 @@ export default {
             ready,
             error,
             changeMode,
+            getFavoriteIcon,
+            toggleFavorite,
+            updateTime,
+            formateTime,
+            onProgressChanging,
+            onProgressChanged,
+            end,
+            pureMusicLyric,
+            playingLyric,
+            currentShow, 
+            middleLStyle,
+            middleRStyle, 
+            onMiddleTouchStart, 
+            onMiddleTouchMove, 
+            onMiddleTouchEnd
         }
     }
 }

@@ -2,7 +2,7 @@
 import { defineProps,defineEmits, useTemplateRef } from 'vue'
 import useFixed from './useFixed'
 import useShortcut from './useShortcut.js'
-import scroll from '@/components/base/scroll/scroll.vue'
+import Scroll from "@/components/wrap-scroll"
 const emit=defineEmits(['select'])
 const props = defineProps({
   data: {
