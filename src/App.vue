@@ -17,7 +17,23 @@ const viewStyle=computed(()=>{
 <template>
   <m-header></m-header>
   <mTab></mTab>
-  <router-view :style="viewStyle"></router-view>
+  <!-- 其他视图 -->
+  <router-view :style="viewStyle" v-slot="{Component}">
+    <keep-alive>
+      <component :is="Component"/>
+    </keep-alive>
+  </router-view>
+  <!-- 用户中心视图 -->
+  <router-view 
+    name="user" 
+    :style="viewStyle" 
+    v-slot="{ Component }">
+      <transition  appear name="slide">
+        <keep-alive>
+          <component :is="Component"/>
+        </keep-alive>
+      </transition>
+  </router-view>
   <player></player>
 </template>
 

@@ -119,6 +119,7 @@ import useCD from './use-cd';
 import useLyric from './use-lyric';
 import useMiddleInteractive from './use-middle-interactive'
 import useAnimation from './use-animation';
+import usePlayHistory from "./use-play-history"
 
 import progressBar from './progress-bar.vue';
 import Scroll from "@/components/base/scroll/scroll.vue";
@@ -167,6 +168,7 @@ export default {
         const {lyricScrollRef,lyricListRef,currentLyric,currentLineNum,playLyric,stopLyric,pureMusicLyric,playingLyric}=useLyric({songReady,currentTime});
         const { currentShow, middleLStyle, middleRStyle, onMiddleTouchStart, onMiddleTouchMove, onMiddleTouchEnd } = useMiddleInteractive()
         const { cdWrapperRef,enter,afterEnter,leave,afterLeave }=useAnimation(); 
+        const { savePlay }=usePlayHistory();
 
         // watch
         watch(currentSong,(newSong)=>{
@@ -179,7 +181,7 @@ export default {
           currentTime.value=0;
           songReady.value=false;
           const audioEl=audioRef.value;
-          audioEl.src="https://lw-sycdn.kuwo.cn/bd07c497d2bd9e3f58ce6856f61928fa/68adaf69/resource/30106/trackmedia/M500004eqAmX3CBgwq.mp3";
+          audioEl.src="//img95.699pic.com/music/preView/000/074/240/8.mp3";
           audioEl.play();
           store.commit('setPlayingState',true)
         })
@@ -206,6 +208,7 @@ export default {
           if(songReady.value) return 
           songReady.value=true;
           playLyric()
+          savePlay(currentSong.value)
         }
         function goBack(){
           store.commit("setFullScreen",false)

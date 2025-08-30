@@ -91,6 +91,7 @@ export function addSong({ commit, state }, song) {
   commit('setFullScreen', true)
 }
 
+
 function findIndex(list, song) {
   return list.findIndex((item) => {
     return item.id === song.id
